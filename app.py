@@ -358,7 +358,7 @@ def main():
             
             if st.button("Next: Tell us about your mood", key="persona_next"):
                 st.session_state.stage = 'mood'
-                st.experimental_rerun()
+                st.rerun()
     
     # STAGE 2: Mood and Context Collection
     elif st.session_state.stage == 'mood':
@@ -457,12 +457,12 @@ def main():
             with col1:
                 if st.button("Back to Persona", key="mood_back"):
                     st.session_state.stage = 'persona'
-                    st.experimental_rerun()
+                    st.rerun()
             
             with col2:
                 if st.button("Get Recommendations", key="mood_next"):
                     st.session_state.stage = 'searching'
-                    st.experimental_rerun()
+                    st.rerun()
     
     # STAGE 3: Searching for Recommendations
     elif st.session_state.stage == 'searching':
@@ -491,7 +491,7 @@ def main():
                 For each recommendation, provide:
                 1. Title (exact spelling is important)
                 2. Year of release (if known)
-                3. Type  (movie, TV show, or anime)
+                3. Type (movie, TV show, or anime)
                 4. A brief overview of why this would appeal to the user
 
                 Return the response in this JSON format ONLY:
@@ -617,14 +617,14 @@ def main():
                 
                 st.session_state.recommendations = processed_recommendations
                 st.session_state.stage = 'results'
-                st.experimental_rerun()
+                st.rerun()
                 
             except Exception as e:
                 st.error(f"Error generating recommendations: {str(e)}")
                 # Fallback in case of API error
                 st.session_state.stage = 'results'
                 st.session_state.recommendations = []  # Empty recommendations
-                st.experimental_rerun()
+                st.rerun()
     
     # STAGE 4: Display Recommendations
     elif st.session_state.stage == 'results':
@@ -636,7 +636,7 @@ def main():
                 # Reset session state
                 for key in list(st.session_state.keys()):
                     del st.session_state[key]
-                st.experimental_rerun()
+                st.rerun()
         else:
             # Display recommendations in cards
             cols = st.columns(len(st.session_state.recommendations))
@@ -661,7 +661,7 @@ def main():
                 # Reset session state
                 for key in list(st.session_state.keys()):
                     del st.session_state[key]
-                st.experimental_rerun()
+                st.rerun()
                 
     # Footer
     st.markdown("""
