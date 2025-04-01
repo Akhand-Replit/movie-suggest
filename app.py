@@ -21,28 +21,75 @@ def get_secrets():
         # For local development with secrets.toml
         tmdb_api_key = st.secrets["tmdb_api_key"]
         gemini_api_key = st.secrets["gemini_api_key"]
-    except:
+        
+        # Validate API keys
+        if tmdb_api_key == "YOUR_TMDB_API_KEY_HERE" or gemini_api_key == "YOUR_GEMINI_API_KEY_HERE":
+            st.error("⚠️ Please replace the placeholder API keys in your secrets.toml file with actual API keys.")
+            tmdb_api_key = None
+            gemini_api_key = None
+    except Exception as e:
         # Fallback for development (replace with your actual keys for testing)
-        st.error("⚠️ API keys not found in secrets. Please configure secrets.toml file.")
-        tmdb_api_key = "your_tmdb_api_key"
-        gemini_api_key = "your_gemini_api_key"
+        st.error(f"⚠️ API keys not found in secrets: {str(e)}. Please configure secrets.toml file.")
+        tmdb_api_key = None
+        gemini_api_key = None
     
     return tmdb_api_key, gemini_api_key
 
 tmdb_api_key, gemini_api_key = get_secrets()
 
-# Initialize Gemini API
-genai.configure(api_key=gemini_api_key)
-generation_config = {
-    "temperature": 0.9,
-    "top_p": 1,
-    "top_k": 32,
-    "max_output_tokens": 4096,
-}
-model = genai.GenerativeModel(
-    model_name="gemini-pro",
-    generation_config=generation_config
-)
+# Use direct API requests for Gemini instead of the SDK
+def call_gemini_api(prompt):
+    """Call Gemini API directly using requests instead of the SDK"""
+    try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_api_key}"
+        headers = {'Content-Type': 'application/json'}
+        data = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }],
+            "generationConfig": {
+                "temperature": 0.9,
+                "topP": 1,
+                "topK": 32,
+                "maxOutputTokens": 4096
+            }
+        }
+        
+        response = requests.post(url, headers=headers, json=data)
+        
+        # Check for API errors
+        if response.status_code != 200:
+            st.error(f"Gemini API error: {response.status_code} - {response.text}")
+            return None
+            
+        response_data = response.json()
+        
+        # Extract the text from the response
+        if 'candidates' in response_data and len(response_data['candidates']) > 0:
+            candidate = response_data['candidates'][0]
+            if 'content' in candidate and 'parts' in candidate['content']:
+                for part in candidate['content']['parts']:
+                    if 'text' in part:
+                        return part['text']
+        
+        st.error("Unexpected response format from Gemini API")
+        return None
+    except Exception as e:
+        st.error(f"Failed to call Gemini API: {str(e)}")
+        return None
+
+# Test the Gemini API on initialization
+def initialize_gemini():
+    if not gemini_api_key or gemini_api_key == "YOUR_GEMINI_API_KEY_HERE":
+        st.error("Gemini API key not properly configured")
+        return False
+        
+    test_response = call_gemini_api("Hello")
+    if test_response:
+        return True
+    return False
+
+gemini_available = initialize_gemini()
 
 # Custom CSS for retro-futuristic UI
 def load_css():
@@ -218,7 +265,17 @@ def main():
     
     # Get TMDB configuration
     if 'tmdb_config' not in st.session_state:
-        st.session_state.tmdb_config = get_tmdb_config()
+        tmdb_config = get_tmdb_config()
+        if tmdb_config:
+            st.session_state.tmdb_config = tmdb_config
+        else:
+            # Fallback configuration if API call fails
+            st.session_state.tmdb_config = {
+                "images": {
+                    "secure_base_url": "https://image.tmdb.org/t/p/",
+                    "poster_sizes": ["w92", "w154", "w185", "w342", "w500", "w780", "original"]
+                }
+            }
     
     # STAGE 1: User Persona Collection
     if st.session_state.stage == 'persona':
@@ -228,30 +285,46 @@ def main():
             # Use Gemini to generate persona questions if they don't exist yet
             if 'persona_questions' not in st.session_state:
                 with st.spinner("Crafting personalized questions..."):
-                    prompt = """
-                    Generate 4 questions to understand a user's movie/anime watching preferences.
-                    First question must ask if they prefer anime or movies.
-                    Return the result as a JSON with this structure:
-                    {
-                        "questions": [
-                            {
-                                "id": "q1",
-                                "text": "Question text here",
-                                "options": ["Option 1", "Option 2", "Option 3"]
-                            },
-                            {
-                                "id": "q2",
-                                ...
-                            }
-                        ]
-                    }
-                    """
-                    response = model.generate_content(prompt)
-                    try:
-                        questions_json = json.loads(response.text)
-                        st.session_state.persona_questions = questions_json["questions"]
-                    except:
-                        # Fallback questions if API fails
+                    if gemini_available:
+                        prompt = """
+                        Generate 4 questions to understand a user's movie/anime watching preferences.
+                        First question must ask if they prefer anime or movies.
+                        Return the result as a JSON with this structure ONLY:
+                        {
+                            "questions": [
+                                {
+                                    "id": "q1",
+                                    "text": "Question text here",
+                                    "options": ["Option 1", "Option 2", "Option 3"]
+                                },
+                                {
+                                    "id": "q2",
+                                    ...
+                                }
+                            ]
+                        }
+                        The response must be valid JSON and nothing else.
+                        """
+                        try:
+                            response_text = call_gemini_api(prompt)
+                            if response_text:
+                                # Find JSON in the response
+                                json_start = response_text.find('{')
+                                json_end = response_text.rfind('}') + 1
+                                if json_start >= 0 and json_end > json_start:
+                                    json_str = response_text[json_start:json_end]
+                                    questions_json = json.loads(json_str)
+                                    st.session_state.persona_questions = questions_json["questions"]
+                                else:
+                                    raise ValueError("No valid JSON found in response")
+                            else:
+                                raise ValueError("Empty response from Gemini API")
+                        except Exception as e:
+                            st.warning(f"Using default questions due to API limitation. Error: {str(e)}")
+                            # Use fallback questions below
+                    else:
+                        st.warning("Using default questions (Gemini API unavailable)")
+                        # Use fallback questions below
                         st.session_state.persona_questions = [
                             {
                                 "id": "content_type",
@@ -296,38 +369,54 @@ def main():
             if 'mood_questions' not in st.session_state:
                 with st.spinner("Analyzing your preferences..."):
                     persona_json = json.dumps(st.session_state.persona)
-                    prompt = f"""
-                    Based on this user persona: {persona_json}
-                    
-                    Generate 5-7 questions to understand what kind of movie/show the user wants to watch right now.
-                    Include questions about:
-                    - Who they're watching with
-                    - Their current mood
-                    - Time available for watching
-                    - Themes they're interested in
-                    - Any other relevant factors
+                    if gemini_available:
+                        prompt = f"""
+                        Based on this user persona: {persona_json}
+                        
+                        Generate 5-7 questions to understand what kind of movie/show the user wants to watch right now.
+                        Include questions about:
+                        - Who they're watching with
+                        - Their current mood
+                        - Time available for watching
+                        - Themes they're interested in
+                        - Any other relevant factors
 
-                    Return the result as a JSON with this structure:
-                    {{
-                        "questions": [
-                            {{
-                                "id": "q1",
-                                "text": "Question text here",
-                                "options": ["Option 1", "Option 2", "Option 3"]
-                            }},
-                            {{
-                                "id": "q2",
-                                ...
-                            }}
-                        ]
-                    }}
-                    """
-                    response = model.generate_content(prompt)
-                    try:
-                        questions_json = json.loads(response.text)
-                        st.session_state.mood_questions = questions_json["questions"]
-                    except:
-                        # Fallback mood questions if API fails
+                        Return the result as a JSON with this structure ONLY:
+                        {{
+                            "questions": [
+                                {{
+                                    "id": "q1",
+                                    "text": "Question text here",
+                                    "options": ["Option 1", "Option 2", "Option 3"]
+                                }},
+                                {{
+                                    "id": "q2",
+                                    ...
+                                }}
+                            ]
+                        }}
+                        The response must be valid JSON and nothing else.
+                        """
+                        try:
+                            response_text = call_gemini_api(prompt)
+                            if response_text:
+                                # Find JSON in the response
+                                json_start = response_text.find('{')
+                                json_end = response_text.rfind('}') + 1
+                                if json_start >= 0 and json_end > json_start:
+                                    json_str = response_text[json_start:json_end]
+                                    questions_json = json.loads(json_str)
+                                    st.session_state.mood_questions = questions_json["questions"]
+                                else:
+                                    raise ValueError("No valid JSON found in response")
+                            else:
+                                raise ValueError("Empty response from Gemini API")
+                        except Exception as e:
+                            st.warning(f"Using default questions due to API limitation. Error: {str(e)}")
+                            # Use fallback questions below
+                    else:
+                        st.warning("Using default questions (Gemini API unavailable)")
+                        # Use fallback questions below
                         st.session_state.mood_questions = [
                             {
                                 "id": "social_context",
@@ -392,35 +481,97 @@ def main():
         mood_json = json.dumps(st.session_state.mood_context)
         
         with st.spinner("AI is crafting your personalized recommendations..."):
-            prompt = f"""
-            Based on this user persona: {persona_json}
-            And their current mood/context: {mood_json}
-            
-            Recommend exactly 3 movies or shows (based on their preference for anime vs movies).
-            
-            For each recommendation, provide:
-            1. Title (exact spelling is important)
-            2. Year of release (if known)
-            3. Type (movie, TV show, or anime)
-            4. A brief overview of why this would appeal to the user
+            if gemini_available:
+                prompt = f"""
+                Based on this user persona: {persona_json}
+                And their current mood/context: {mood_json}
+                
+                Recommend exactly 3 movies or shows (based on their preference for anime vs movies).
+                
+                For each recommendation, provide:
+                1. Title (exact spelling is important)
+                2. Year of release (if known)
+                3. Type  (movie, TV show, or anime)
+                4. A brief overview of why this would appeal to the user
 
-            Return the response in this JSON format:
-            {{
-                "recommendations": [
-                    {{
-                        "title": "Title here",
-                        "year": "Year here or null",
-                        "type": "movie/show/anime",
-                        "explanation": "Why this recommendation matches their preferences"
-                    }},
-                    ...
-                ]
-            }}
-            """
-            
-            try:
-                response = model.generate_content(prompt)
-                recommendations_data = json.loads(response.text)
+                Return the response in this JSON format ONLY:
+                {{
+                    "recommendations": [
+                        {{
+                            "title": "Title here",
+                            "year": "Year here or null",
+                            "type": "movie/show/anime",
+                            "explanation": "Why this recommendation matches their preferences"
+                        }},
+                        ...
+                    ]
+                }}
+                The response must be valid JSON and nothing else.
+                """
+                
+                try:
+                    response_text = call_gemini_api(prompt)
+                    if response_text:
+                        # Find JSON in the response
+                        json_start = response_text.find('{')
+                        json_end = response_text.rfind('}') + 1
+                        if json_start >= 0 and json_end > json_start:
+                            json_str = response_text[json_start:json_end]
+                            recommendations_data = json.loads(json_str)
+                        else:
+                            raise ValueError("No valid JSON found in response")
+                    else:
+                        raise ValueError("Empty response from Gemini API")
+                except Exception as e:
+                    st.error(f"Error generating recommendations with Gemini: {str(e)}")
+                    # Fallback recommendations
+                    recommendations_data = {
+                        "recommendations": [
+                            {
+                                "title": "The Matrix",
+                                "year": "1999",
+                                "type": "movie",
+                                "explanation": "A classic sci-fi film with groundbreaking visual effects and a thought-provoking story."
+                            },
+                            {
+                                "title": "Stranger Things",
+                                "year": "2016",
+                                "type": "show",
+                                "explanation": "A nostalgic sci-fi series with great characters and supernatural mysteries."
+                            },
+                            {
+                                "title": "Spirited Away",
+                                "year": "2001",
+                                "type": "anime",
+                                "explanation": "A beautifully animated fantasy film with rich storytelling and captivating visuals."
+                            }
+                        ]
+                    }
+            else:
+                # If Gemini API is not available, use fallback recommendations
+                st.warning("Using default recommendations (Gemini API unavailable)")
+                recommendations_data = {
+                    "recommendations": [
+                        {
+                            "title": "The Matrix",
+                            "year": "1999",
+                            "type": "movie",
+                            "explanation": "A classic sci-fi film with groundbreaking visual effects and a thought-provoking story."
+                        },
+                        {
+                            "title": "Stranger Things",
+                            "year": "2016",
+                            "type": "show",
+                            "explanation": "A nostalgic sci-fi series with great characters and supernatural mysteries."
+                        },
+                        {
+                            "title": "Spirited Away",
+                            "year": "2001",
+                            "type": "anime",
+                            "explanation": "A beautifully animated fantasy film with rich storytelling and captivating visuals."
+                        }
+                    ]
+                }
                 
                 # Process each recommendation and get details from TMDB
                 processed_recommendations = []
