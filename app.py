@@ -90,236 +90,157 @@ def initialize_gemini():
 
 gemini_available = initialize_gemini()
 
-# Custom CSS for improved retro-futuristic UI
+# Custom CSS for dark UI with neon purple outlines
 def load_css():
     st.markdown("""
     <style>
-    /* Enhanced Retro-futuristic theme */
+    /* Dark UI with neon purple outlines */
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Audiowide&family=Syne+Mono&display=swap');
     
     .main {
-        background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 100%);
-        color: #d1e0ff;
-        font-family: 'Syne Mono', monospace;
+        background-color: #000000;
+        color: #ffffff;
+        font-family: 'Orbitron', sans-serif;
     }
     
     h1, h2, h3 {
         font-family: 'Audiowide', cursive;
-        color: #00ffcc;
-        text-shadow: 0 0 10px #00ffcc80, 0 0 20px #00ffcc40;
-        letter-spacing: 2px;
+        color: #ffffff;
+        text-align: center;
     }
     
-    .stButton>button {
-        background: linear-gradient(90deg, #ff00aa, #aa00ff);
-        color: white;
-        border: none;
-        border-radius: 5px;
-        font-family: 'Orbitron', sans-serif;
-        transition: all 0.3s ease;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        padding: 10px 20px;
-        margin: 10px 0;
+    /* Option buttons styled like in the image */
+    div.stRadio > div {
+        background-color: transparent !important;
+        border: none !important;
     }
     
-    .stButton>button:hover {
-        background: linear-gradient(90deg, #aa00ff, #ff00aa);
-        box-shadow: 0 0 15px #ff00aa80, 0 0 30px #ff00aa40;
-        transform: scale(1.05);
-    }
-    
-    .question-card {
-        background: linear-gradient(145deg, #15153a, #0a0a1a);
-        border: 1px solid #3a3a8c;
-        border-radius: 10px;
-        padding: 20px;
-        margin: 20px 0;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 255, 204, 0.2);
-        animation: glow 5s infinite alternate;
-    }
-    
-    @keyframes glow {
-        0% {
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 255, 204, 0.2);
-        }
-        100% {
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7), 0 0 40px rgba(0, 255, 204, 0.4);
-        }
-    }
-    
-    .recommendation-card {
-        background: linear-gradient(145deg, #15153a, #0a0a1a);
-        border: 1px solid #3a3a8c;
-        border-radius: 10px;
-        padding: 20px;
-        margin: 20px 0;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 255, 204, 0.2);
-        transition: all 0.3s ease;
+    div.stRadio > div > label {
         position: relative;
+        display: block;
+        background-color: transparent;
+        border: 2px solid #8a2be2;
+        border-radius: 30px;
+        color: white;
+        padding: 15px 20px;
+        margin: 10px 0;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: left;
         overflow: hidden;
+        font-family: 'Orbitron', sans-serif;
+        box-shadow: 0 0 5px #8a2be2;
     }
     
-    .recommendation-card::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: linear-gradient(
-            to bottom right,
-            rgba(255, 255, 255, 0) 0%,
-            rgba(255, 255, 255, 0.05) 50%,
-            rgba(255, 255, 255, 0) 100%
-        );
-        transform: rotate(30deg);
-        animation: shine 6s infinite;
+    div.stRadio > div > label:hover {
+        box-shadow: 0 0 15px #8a2be2;
     }
     
-    @keyframes shine {
-        0% {
-            transform: translateX(-100%) rotate(30deg);
-        }
-        100% {
-            transform: translateX(100%) rotate(30deg);
-        }
+    div.stRadio > div > label[data-baseweb="radio"] input:checked + span {
+        background-color: #8a2be2;
+    }
+    
+    /* Question text styling */
+    .question-text {
+        color: white;
+        font-size: 20px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    
+    /* Button styling */
+    .stButton > button {
+        border: 2px solid #8a2be2;
+        border-radius: 30px;
+        background-color: transparent;
+        color: white;
+        font-family: 'Orbitron', sans-serif;
+        padding: 10px 20px;
+        transition: all 0.3s;
+        box-shadow: 0 0 5px #8a2be2;
+        width: 100%;
+    }
+    
+    .stButton > button:hover {
+        box-shadow: 0 0 15px #8a2be2;
+        background-color: rgba(138, 43, 226, 0.2);
+    }
+    
+    /* Card styling */
+    .recommendation-card {
+        background-color: rgba(0, 0, 0, 0.7);
+        border: 2px solid #8a2be2;
+        border-radius: 15px;
+        padding: 20px;
+        margin: 20px 0;
+        box-shadow: 0 0 10px #8a2be2;
+        transition: all 0.3s;
     }
     
     .recommendation-card:hover {
-        transform: translateY(-5px) scale(1.02);
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 255, 204, 0.3);
+        box-shadow: 0 0 20px #8a2be2;
     }
     
-    .progress-bar {
-        height: 10px;
-        background: linear-gradient(90deg, #ff00aa, #00ffcc);
-        border-radius: 5px;
-        margin-bottom: 20px;
-    }
-    
-    .neon-text {
-        color: #00ffcc;
-        text-shadow: 0 0 10px #00ffcc80, 0 0 20px #00ffcc40;
-        animation: pulse 2s infinite alternate;
-    }
-    
-    @keyframes pulse {
+    /* Loading animation */
+    @keyframes glow {
         0% {
-            text-shadow: 0 0 10px #00ffcc80, 0 0 20px #00ffcc40;
+            box-shadow: 0 0 5px #8a2be2;
+        }
+        50% {
+            box-shadow: 0 0 20px #8a2be2, 0 0 30px #8a2be2;
         }
         100% {
-            text-shadow: 0 0 20px #00ffcc80, 0 0 40px #00ffcc40;
+            box-shadow: 0 0 5px #8a2be2;
         }
     }
     
-    .glow-container {
-        padding: 15px;
-        border-radius: 10px;
-        box-shadow: 0 0 15px #00ffcc40;
-        background: rgba(0, 30, 60, 0.3);
-        backdrop-filter: blur(5px);
-        margin-bottom: 30px;
+    .loading-container {
+        width: 100px;
+        height: 100px;
+        margin: 50px auto;
+        position: relative;
+        animation: glow 2s infinite;
     }
     
-    /* Custom radio buttons */
-    div.st-emotion-cache-16txtl3 div {
-        background: linear-gradient(145deg, #15153a, #0a0a1a);
-        color: #d1e0ff;
-        border: 1px solid #3a3a8c;
-        padding: 15px;
-        border-radius: 5px;
-        margin: 10px 0;
-        transition: all 0.3s;
-        font-family: 'Syne Mono', monospace;
+    .loading-circle {
+        width: 100px;
+        height: 100px;
+        border: 3px solid #8a2be2;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 40px;
     }
     
-    div.st-emotion-cache-16txtl3 div:hover {
-        background: linear-gradient(145deg, #1f1f4f, #15153a);
-        box-shadow: 0 0 15px rgba(0, 255, 204, 0.3);
-        transform: translateX(5px);
+    /* Progress indicator */
+    .progress-dots {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
     }
     
-    div.st-emotion-cache-16txtl3 div[data-testid*="StRadio"] label:has(input:checked) {
-        background: linear-gradient(145deg, #2a2a6a, #1f1f4f);
-        box-shadow: 0 0 20px rgba(0, 255, 204, 0.4);
+    .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #333;
+        border: 1px solid #8a2be2;
+        margin: 0 5px;
     }
     
+    .dot.active {
+        background-color: #8a2be2;
+        box-shadow: 0 0 10px #8a2be2;
+    }
+    
+    /* Footer styling */
     .footer {
         margin-top: 50px;
         padding: 20px;
         text-align: center;
-        border-top: 1px solid #3a3a8c;
-        background: rgba(0, 30, 60, 0.2);
-        backdrop-filter: blur(5px);
-    }
-    
-    /* Custom scrollbar */
-    ::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: #0a0a1a;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(90deg, #ff00aa, #00ffcc);
-        border-radius: 5px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(90deg, #aa00ff, #00ffaa);
-    }
-    
-    /* Typography improvements */
-    p {
-        font-size: 16px;
-        line-height: 1.6;
-        margin-bottom: 15px;
-    }
-    
-    strong {
-        color: #ff00aa;
-        font-weight: bold;
-    }
-    
-    /* Card title */
-    .card-title {
-        font-family: 'Audiowide', cursive;
-        font-size: 24px;
-        background: linear-gradient(90deg, #00ffcc, #00ccff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 15px;
-    }
-    
-    /* Progress indicator */
-    .step-indicator {
-        display: flex;
-        justify-content: center;
-        margin: 20px 0 30px 0;
-    }
-    
-    .step-dot {
-        width: 15px;
-        height: 15px;
-        border-radius: 50%;
-        margin: 0 5px;
-        background: #1a1a3a;
-        border: 1px solid #3a3a8c;
-        transition: all 0.3s ease;
-    }
-    
-    .step-dot.active {
-        background: #00ffcc;
-        box-shadow: 0 0 10px #00ffcc80;
-    }
-    
-    .step-dot.completed {
-        background: #ff00aa;
-        box-shadow: 0 0 10px #ff00aa80;
+        border-top: 1px solid #8a2be2;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -423,16 +344,16 @@ def get_movie_details(movie_id, media_type="movie"):
         st.error(f"Error getting movie details: {str(e)}")
         return None
 
+# Function to get image URL with fallback
 def get_image_url(poster_path, base_url, poster_size):
     if poster_path:
         return f"{base_url}{poster_size}{poster_path}"
-    return "https://via.placeholder.com/300x450?text=No+Image+Available"
+    return "https://i.ibb.co/s9ZYS5wk/45e6544ed099.jpg"  # Use provided fallback image
 
 # Main application logic
 def main():
-    # Header with glowing effect
-    st.markdown("<h1 class='neon-text' style='text-align: center;'>SVOMO RECOMMENDATION</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; margin-bottom: 30px;'>Your AI-powered movie and anime recommendation system</p>", unsafe_allow_html=True)
+    # Header
+    st.markdown("<h1>SVOMO RECOMMENDATION</h1>", unsafe_allow_html=True)
     
     # Initialize session state
     if 'stage' not in st.session_state:
@@ -462,262 +383,258 @@ def main():
                 }
             }
     
-    # Progress indicator
-    if st.session_state.stage in ['persona', 'mood']:
-        total_questions = 8  # Approximate total questions across both stages
-        current_position = st.session_state.question_index
-        if st.session_state.stage == 'mood':
-            current_position += 4  # Add persona questions count
-        
-        st.markdown('<div class="step-indicator">', unsafe_allow_html=True)
-        for i in range(total_questions):
-            if i < current_position:
-                st.markdown(f'<div class="step-dot completed"></div>', unsafe_allow_html=True)
-            elif i == current_position:
-                st.markdown(f'<div class="step-dot active"></div>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<div class="step-dot"></div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    
     # STAGE 1: User Persona Collection - One question at a time
-    if st.session_state.stage == 'persona':
-        with st.container():
-            st.markdown("<div class='glow-container'><h2>Tell us about yourself</h2></div>", unsafe_allow_html=True)
+    if st.session_state.stage == 'persona':        
+        # Define persona questions if they don't exist yet
+        if 'persona_questions' not in st.session_state:
+            # Fallback questions defined first to ensure they're always available
+            st.session_state.persona_questions = [
+                {
+                    "id": "content_type",
+                    "text": "Do you prefer watching anime or movies?",
+                    "options": ["Anime", "Movies", "Both equally"]
+                },
+                {
+                    "id": "preferred_genres",
+                    "text": "Which genres do you usually enjoy watching?",
+                    "options": ["Action/Adventure", "Drama/Romance", "Comedy", "Sci-Fi/Fantasy"]
+                },
+                {
+                    "id": "language_preference",
+                    "text": "Which language content do you prefer?",
+                    "options": ["English", "Japanese", "Korean", "Bollywood/Hindi", "Multiple languages"]
+                },
+                {
+                    "id": "viewing_frequency",
+                    "text": "How often do you watch movies or shows?",
+                    "options": ["Daily", "Few times a week", "Weekends only", "Occasionally"]
+                }
+            ]
             
-            # Define persona questions if they don't exist yet
-            if 'persona_questions' not in st.session_state:
-                # Fallback questions defined first to ensure they're always available
-                st.session_state.persona_questions = [
+            # Try to get personalized questions from Gemini
+            with st.spinner("Loading..."):
+                st.markdown("""
+                <div class="loading-container">
+                    <div class="loading-circle">?</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if gemini_available:
+                    prompt = """
+                    Generate 4 questions to understand a user's movie/anime watching preferences.
+                    First question must ask if they prefer anime or movies.
+                    Return the result as a JSON with this structure ONLY:
                     {
-                        "id": "content_type",
-                        "text": "Do you prefer watching anime or movies?",
-                        "options": ["Anime", "Movies", "Both equally"]
-                    },
-                    {
-                        "id": "preferred_genres",
-                        "text": "Which genres do you usually enjoy watching?",
-                        "options": ["Action/Adventure", "Drama/Romance", "Comedy", "Sci-Fi/Fantasy"]
-                    },
-                    {
-                        "id": "language_preference",
-                        "text": "Which language content do you prefer?",
-                        "options": ["English", "Japanese", "Korean", "Bollywood/Hindi", "Multiple languages"]
-                    },
-                    {
-                        "id": "viewing_frequency",
-                        "text": "How often do you watch movies or shows?",
-                        "options": ["Daily", "Few times a week", "Weekends only", "Occasionally"]
+                        "questions": [
+                            {
+                                "id": "q1",
+                                "text": "Question text here",
+                                "options": ["Option 1", "Option 2", "Option 3"]
+                            },
+                            {
+                                "id": "q2",
+                                ...
+                            }
+                        ]
                     }
-                ]
-                
-                # Try to get personalized questions from Gemini
-                with st.spinner("Crafting personalized questions..."):
-                    if gemini_available:
-                        prompt = """
-                        Generate 4 questions to understand a user's movie/anime watching preferences.
-                        First question must ask if they prefer anime or movies.
-                        Return the result as a JSON with this structure ONLY:
-                        {
-                            "questions": [
-                                {
-                                    "id": "q1",
-                                    "text": "Question text here",
-                                    "options": ["Option 1", "Option 2", "Option 3"]
-                                },
-                                {
-                                    "id": "q2",
-                                    ...
-                                }
-                            ]
-                        }
-                        The response must be valid JSON and nothing else.
-                        """
-                        try:
-                            response_text = call_gemini_api(prompt)
-                            if response_text:
-                                # Find JSON in the response
-                                json_start = response_text.find('{')
-                                json_end = response_text.rfind('}') + 1
-                                if json_start >= 0 and json_end > json_start:
-                                    json_str = response_text[json_start:json_end]
-                                    questions_json = json.loads(json_str)
-                                    st.session_state.persona_questions = questions_json["questions"]
-                        except Exception as e:
-                            pass
+                    The response must be valid JSON and nothing else.
+                    """
+                    try:
+                        response_text = call_gemini_api(prompt)
+                        if response_text:
+                            # Find JSON in the response
+                            json_start = response_text.find('{')
+                            json_end = response_text.rfind('}') + 1
+                            if json_start >= 0 and json_end > json_start:
+                                json_str = response_text[json_start:json_end]
+                                questions_json = json.loads(json_str)
+                                st.session_state.persona_questions = questions_json["questions"]
+                    except Exception as e:
+                        pass
+        
+        # Display one persona question at a time
+        if st.session_state.question_index < len(st.session_state.persona_questions):
+            q = st.session_state.persona_questions[st.session_state.question_index]
             
-            # Display one persona question at a time
-            if st.session_state.question_index < len(st.session_state.persona_questions):
-                q = st.session_state.persona_questions[st.session_state.question_index]
-                
-                # Create a card for the question
-                st.markdown('<div class="question-card">', unsafe_allow_html=True)
-                st.markdown(f"<h3>Question {st.session_state.question_index + 1}</h3>", unsafe_allow_html=True)
-                
-                # Display the question
-                selected_option = st.radio(
-                    q["text"],
-                    options=q["options"],
-                    key=f"persona_{q['id']}"
-                )
-                
-                # Store the answer
-                st.session_state.persona[q["id"]] = selected_option
-                
-                st.markdown('</div>', unsafe_allow_html=True)
-                
-                col1, col2 = st.columns([1, 1])
-                
-                with col2:
-                    if st.button("Next Question", key=f"next_{st.session_state.question_index}"):
-                        st.session_state.question_index += 1
-                        st.rerun()
-            else:
-                # Move to mood questions
-                st.session_state.stage = 'mood'
-                st.session_state.question_index = 0
-                st.rerun()
+            # Progress dots
+            st.markdown('<div class="progress-dots">', unsafe_allow_html=True)
+            for i in range(len(st.session_state.persona_questions)):
+                if i == st.session_state.question_index:
+                    st.markdown(f'<div class="dot active"></div>', unsafe_allow_html=True)
+                else:
+                    st.markdown(f'<div class="dot"></div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Display the question
+            st.markdown(f'<div class="question-text">{q["text"]}</div>', unsafe_allow_html=True)
+            
+            # Display options
+            selected_option = st.radio(
+                "",  # Empty label since we're showing the question text above
+                options=q["options"],
+                key=f"persona_{q['id']}"
+            )
+            
+            # Store the answer
+            st.session_state.persona[q["id"]] = selected_option
+            
+            # Next button
+            if st.button("Next", key=f"next_{st.session_state.question_index}"):
+                st.session_state.question_index += 1
+                st.experimental_rerun()
+        else:
+            # Move to mood questions
+            st.session_state.stage = 'mood'
+            st.session_state.question_index = 0
+            st.experimental_rerun()
     
     # STAGE 2: Mood and Context Collection - One question at a time
     elif st.session_state.stage == 'mood':
-        with st.container():
-            st.markdown("<div class='glow-container'><h2>What are you in the mood for?</h2></div>", unsafe_allow_html=True)
+        # Generate mood questions if they don't exist yet
+        if 'mood_questions' not in st.session_state:
+            # Fallback mood questions defined first
+            st.session_state.mood_questions = [
+                {
+                    "id": "social_context",
+                    "text": "Who are you watching with?",
+                    "options": ["Alone", "With friend(s)", "With family", "With partner"]
+                },
+                {
+                    "id": "current_mood",
+                    "text": "What's your current mood?",
+                    "options": ["Happy/Excited", "Relaxed/Chill", "Sad/Emotional", "Thoughtful/Introspective"]
+                },
+                {
+                    "id": "available_time",
+                    "text": "How much time do you have available?",
+                    "options": ["Under 2 hours", "2-3 hours", "Multiple sessions", "Binge-watch a series"]
+                },
+                {
+                    "id": "content_theme",
+                    "text": "What theme are you interested in right now?",
+                    "options": ["Love/Romance", "Action/Excitement", "Mystery/Suspense", "Escapism/Fantasy"]
+                }
+            ]
             
-            # Generate mood questions if they don't exist yet
-            if 'mood_questions' not in st.session_state:
-                # Fallback mood questions defined first
-                st.session_state.mood_questions = [
-                    {
-                        "id": "social_context",
-                        "text": "Who are you watching with?",
-                        "options": ["Alone", "With friend(s)", "With family", "With partner"]
-                    },
-                    {
-                        "id": "current_mood",
-                        "text": "What's your current mood?",
-                        "options": ["Happy/Excited", "Relaxed/Chill", "Sad/Emotional", "Thoughtful/Introspective"]
-                    },
-                    {
-                        "id": "available_time",
-                        "text": "How much time do you have available?",
-                        "options": ["Under 2 hours", "2-3 hours", "Multiple sessions", "Binge-watch a series"]
-                    },
-                    {
-                        "id": "content_theme",
-                        "text": "What theme are you interested in right now?",
-                        "options": ["Love/Romance", "Action/Excitement", "Mystery/Suspense", "Escapism/Fantasy"]
-                    }
-                ]
+            # Try to get personalized questions based on persona
+            with st.spinner("Loading..."):
+                st.markdown("""
+                <div class="loading-container">
+                    <div class="loading-circle">?</div>
+                </div>
+                """, unsafe_allow_html=True)
                 
-                # Try to get personalized questions based on persona
-                with st.spinner("Analyzing your preferences..."):
-                    persona_json = json.dumps(st.session_state.persona)
-                    if gemini_available:
-                        # Customize the prompt based on previous answers
-                        content_type = st.session_state.persona.get("content_type", "")
-                        preferred_genres = st.session_state.persona.get("preferred_genres", "")
-                        
-                        prompt = f"""
-                        Based on this user persona: {persona_json}
-                        
-                        The user prefers {content_type} and enjoys {preferred_genres}.
-                        
-                        Generate 4 tailored questions to understand what kind of {content_type.lower()} the user wants to watch right now.
-                        Include questions about:
-                        - Who they're watching with
-                        - Their current mood
-                        - Time available for watching
-                        - Themes they're interested in
-
-                        Return the result as a JSON with this structure ONLY:
-                        {{
-                            "questions": [
-                                {{
-                                    "id": "q1",
-                                    "text": "Question text here",
-                                    "options": ["Option 1", "Option 2", "Option 3", "Option 4"]
-                                }},
-                                {{
-                                    "id": "q2",
-                                    ...
-                                }}
-                            ]
-                        }}
-                        The response must be valid JSON and nothing else.
-                        """
-                        try:
-                            response_text = call_gemini_api(prompt)
-                            if response_text:
-                                # Find JSON in the response
-                                json_start = response_text.find('{')
-                                json_end = response_text.rfind('}') + 1
-                                if json_start >= 0 and json_end > json_start:
-                                    json_str = response_text[json_start:json_end]
-                                    questions_json = json.loads(json_str)
-                                    st.session_state.mood_questions = questions_json["questions"]
-                        except Exception as e:
-                            pass
-            
-            # Display one mood question at a time
-            if st.session_state.question_index < len(st.session_state.mood_questions):
-                q = st.session_state.mood_questions[st.session_state.question_index]
-                
-                # Create a card for the question
-                st.markdown('<div class="question-card">', unsafe_allow_html=True)
-                st.markdown(f"<h3>Question {st.session_state.question_index + 5}</h3>", unsafe_allow_html=True)
-                
-                # Display the question
-                selected_option = st.radio(
-                    q["text"],
-                    options=q["options"],
-                    key=f"mood_{q['id']}"
-                )
-                
-                # Store the answer
-                st.session_state.mood_context[q["id"]] = selected_option
-                
-                st.markdown('</div>', unsafe_allow_html=True)
-                
-                col1, col2 = st.columns([1, 1])
-                
-                with col1:
-                    if st.button("Previous", key=f"prev_{st.session_state.question_index}"):
-                        if st.session_state.question_index > 0:
-                            st.session_state.question_index -= 1
-                        else:
-                            # Go back to persona questions
-                            st.session_state.stage = 'persona'
-                            st.session_state.question_index = len(st.session_state.persona_questions) - 1
-                        st.rerun()
-                
-                with col2:
-                    if st.session_state.question_index < len(st.session_state.mood_questions) - 1:
-                        next_text = "Next Question"
-                    else:
-                        next_text = "Get Recommendations"
+                persona_json = json.dumps(st.session_state.persona)
+                if gemini_available:
+                    # Customize the prompt based on previous answers
+                    content_type = st.session_state.persona.get("content_type", "")
+                    preferred_genres = st.session_state.persona.get("preferred_genres", "")
                     
-                    if st.button(next_text, key=f"next_{st.session_state.question_index}"):
-                        if st.session_state.question_index < len(st.session_state.mood_questions) - 1:
-                            st.session_state.question_index += 1
-                            st.rerun()
-                        else:
-                            st.session_state.stage = 'searching'
-                            st.rerun()
-            else:
-                # Move to searching
-                st.session_state.stage = 'searching'
-                st.rerun()
+                    prompt = f"""
+                    Based on this user persona: {persona_json}
+                    
+                    The user prefers {content_type} and enjoys {preferred_genres}.
+                    
+                    Generate 4 tailored questions to understand what kind of {content_type.lower()} the user wants to watch right now.
+                    Include questions about:
+                    - Who they're watching with
+                    - Their current mood
+                    - Time available for watching
+                    - Themes they're interested in
+
+                    Return the result as a JSON with this structure ONLY:
+                    {{
+                        "questions": [
+                            {{
+                                "id": "q1",
+                                "text": "Question text here",
+                                "options": ["Option 1", "Option 2", "Option 3", "Option 4"]
+                            }},
+                            {{
+                                "id": "q2",
+                                ...
+                            }}
+                        ]
+                    }}
+                    The response must be valid JSON and nothing else.
+                    """
+                    try:
+                        response_text = call_gemini_api(prompt)
+                        if response_text:
+                            # Find JSON in the response
+                            json_start = response_text.find('{')
+                            json_end = response_text.rfind('}') + 1
+                            if json_start >= 0 and json_end > json_start:
+                                json_str = response_text[json_start:json_end]
+                                questions_json = json.loads(json_str)
+                                st.session_state.mood_questions = questions_json["questions"]
+                    except Exception as e:
+                        pass
+        
+        # Display one mood question at a time
+        if st.session_state.question_index < len(st.session_state.mood_questions):
+            q = st.session_state.mood_questions[st.session_state.question_index]
+            
+            # Progress dots
+            st.markdown('<div class="progress-dots">', unsafe_allow_html=True)
+            for i in range(len(st.session_state.mood_questions)):
+                if i == st.session_state.question_index:
+                    st.markdown(f'<div class="dot active"></div>', unsafe_allow_html=True)
+                else:
+                    st.markdown(f'<div class="dot"></div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Display the question
+            st.markdown(f'<div class="question-text">{q["text"]}</div>', unsafe_allow_html=True)
+            
+            # Display options
+            selected_option = st.radio(
+                "",  # Empty label since we're showing the question text above
+                options=q["options"],
+                key=f"mood_{q['id']}"
+            )
+            
+            # Store the answer
+            st.session_state.mood_context[q["id"]] = selected_option
+            
+            col1, col2 = st.columns([1, 1])
+            
+            with col1:
+                if st.button("Back", key=f"prev_{st.session_state.question_index}"):
+                    if st.session_state.question_index > 0:
+                        st.session_state.question_index -= 1
+                    else:
+                        # Go back to persona questions
+                        st.session_state.stage = 'persona'
+                        st.session_state.question_index = len(st.session_state.persona_questions) - 1
+                    st.experimental_rerun()
+            
+            with col2:
+                if st.session_state.question_index < len(st.session_state.mood_questions) - 1:
+                    next_text = "Next"
+                else:
+                    next_text = "Get Recommendations"
+                
+                if st.button(next_text, key=f"next_{st.session_state.question_index}"):
+                    if st.session_state.question_index < len(st.session_state.mood_questions) - 1:
+                        st.session_state.question_index += 1
+                        st.experimental_rerun()
+                    else:
+                        st.session_state.stage = 'searching'
+                        st.experimental_rerun()
+        else:
+            # Move to searching
+            st.session_state.stage = 'searching'
+            st.experimental_rerun()
     
     # STAGE 3: Searching for Recommendations
     elif st.session_state.stage == 'searching':
-        st.markdown("<div class='glow-container'><h2>Finding your perfect match...</h2></div>", unsafe_allow_html=True)
-        
-        progress_text = "Our AI is searching the multiverse of entertainment for you..."
-        my_bar = st.progress(0, text=progress_text)
-        
-        # Simulated search progress with animated updates
-        for percent_complete in range(0, 101, 5):
-            time.sleep(0.2)  # Faster animation
-            my_bar.progress(percent_complete, text=f"{progress_text} {percent_complete}%")
+        # Show loading animation
+        st.markdown("""
+        <div class="loading-container">
+            <div class="loading-circle">?</div>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Generate recommendations based on user inputs
         persona_json = json.dumps(st.session_state.persona)
@@ -750,7 +667,7 @@ def main():
         # Special case for anime fans based on persona
         is_anime_fan = "Anime" in st.session_state.persona.get("content_type", "")
         
-        with st.spinner("AI is crafting your personalized recommendations..."):
+        with st.spinner(""):
             if gemini_available:
                 # Customize prompt based on collected data
                 content_preference = st.session_state.persona.get("content_type", "")
@@ -798,17 +715,11 @@ def main():
                             try:
                                 recommendations_data = json.loads(json_str)
                             except json.JSONDecodeError as e:
-                                st.error(f"Error parsing recommendation JSON: {str(e)}")
-                                st.write(f"Raw response: {json_str}")
-                        else:
-                            st.warning("Using default recommendations (couldn't parse Gemini response)")
-                    else:
-                        st.warning("Using default recommendations (no response from Gemini)")
+                                pass
                 except Exception as e:
-                    st.error(f"Error generating recommendations with Gemini: {str(e)}")
+                    pass
             else:
                 # If Gemini API is not available, use fallback recommendations that match persona
-                st.warning("Using default recommendations (Gemini API unavailable)")
                 if is_anime_fan:
                     recommendations_data = {
                         "recommendations": [
@@ -894,43 +805,32 @@ def main():
                     
                     processed_recommendations.append(recommendation)
             else:
-                # If TMDB search fails, create a basic recommendation
-                try:
-                    # For anime, try to fetch an image from a public anime API
-                    image_url = "https://via.placeholder.com/300x450?text=No+Image+Available"
-                    if rec["type"].lower() == "anime":
-                        # No need to actually call an external API here, just a placeholder for demonstration
-                        image_url = f"https://via.placeholder.com/300x450?text={rec['title'].replace(' ', '+')}"
-                    
-                    recommendation = {
-                        "id": 0,
-                        "title": rec["title"],
-                        "year": rec.get("year", ""),
-                        "overview": "Details not available from our database, but this is a great match for your preferences!",
-                        "image_url": image_url,
-                        "explanation": rec["explanation"],
-                        "media_type": rec["type"].lower(),
-                        "genres": ["N/A"]
-                    }
-                    processed_recommendations.append(recommendation)
-                except Exception as e:
-                    st.error(f"Error creating recommendation for {rec['title']}: {str(e)}")
+                # If TMDB search fails, create a basic recommendation with fallback image
+                recommendation = {
+                    "id": 0,
+                    "title": rec["title"],
+                    "year": rec.get("year", ""),
+                    "overview": "Details not available from our database, but this is a great match for your preferences!",
+                    "image_url": "https://i.ibb.co/s9ZYS5wk/45e6544ed099.jpg",  # Use provided fallback image
+                    "explanation": rec["explanation"],
+                    "media_type": rec["type"].lower(),
+                    "genres": ["N/A"]
+                }
+                processed_recommendations.append(recommendation)
         
         st.session_state.recommendations = processed_recommendations
         st.session_state.stage = 'results'
-        st.rerun()
+        st.experimental_rerun()
     
     # STAGE 4: Display Recommendations
     elif st.session_state.stage == 'results':
-        st.markdown("<div class='glow-container'><h2>Your Personalized Recommendations</h2></div>", unsafe_allow_html=True)
-        
         if not st.session_state.recommendations:
             st.warning("We couldn't find recommendations that match your preferences. Please try again.")
-            if st.button("Start Over", key="empty_restart"):
+            if st.button("Start Over"):
                 # Reset session state
                 for key in list(st.session_state.keys()):
                     del st.session_state[key]
-                st.rerun()
+                st.experimental_rerun()
         else:
             # Display recommendations in enhanced cards
             cols = st.columns(len(st.session_state.recommendations))
@@ -939,25 +839,22 @@ def main():
                 with cols[i]:
                     st.markdown(f"""
                     <div class='recommendation-card'>
-                        <div class='card-title'>{rec['title']}</div>
+                        <h3>{rec['title']}</h3>
                         <p><strong>Year:</strong> {rec['year'][:4] if rec['year'] else 'N/A'}</p>
-                        <img src="{rec['image_url']}" alt="{rec['title']}" style="width:100%; border-radius:5px; margin:10px 0; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);">
+                        <img src="{rec['image_url']}" alt="{rec['title']}" style="width:100%; border-radius:5px; margin:10px 0;">
                         <p><strong>Genres:</strong> {', '.join(rec['genres']) if rec['genres'] else 'N/A'}</p>
-                        <p><strong>Overview:</strong> {rec['overview'][:150] + '...' if len(rec['overview']) > 150 else rec['overview'] or 'Not available'}</p>
-                        <div style="margin-top:15px; padding:15px; background: linear-gradient(145deg, #1a1a4a, #101030); border-radius:5px; border-left: 3px solid #00ffcc;">
+                        <div style="margin-top:15px; padding:15px; border-left: 2px solid #8a2be2;">
                             <p><strong>Why we recommend this:</strong> {rec['explanation']}</p>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
             
             # Restart button with enhanced styling
-            col1, col2, col3 = st.columns([1, 2, 1])
-            with col2:
-                if st.button("🔄 Start New Recommendation", key="restart"):
-                    # Reset session state
-                    for key in list(st.session_state.keys()):
-                        del st.session_state[key]
-                    st.rerun()
+            if st.button("Start Over"):
+                # Reset session state
+                for key in list(st.session_state.keys()):
+                    del st.session_state[key]
+                st.experimental_rerun()
                 
     # Footer
     st.markdown("""
@@ -969,7 +866,7 @@ def main():
                      alt="TMDB" width="80">
             </div>
             <div>
-                <img src="https://www.gstatic.com/gumdrop/files/bard-gemini-word-mark-transparent-w312px-h112px-2x.png" 
+                <img src="https://lh3.googleusercontent.com/vWdgYhn0Nzl75Yq_MbJoUzRcm2Kf9rTRCgHJuhQMZQYPqGmlik2iGrTVP3mBYPn0z9fjGpwv4wnNGGffIJ2K0v2dRrJ_MIh0PlfR-r4" 
                      alt="Google Gemini" width="120">
             </div>
         </div>
