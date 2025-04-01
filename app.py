@@ -570,12 +570,12 @@ def main():
                 with col2:
                     if st.button("Next Question", key=f"next_{st.session_state.question_index}"):
                         st.session_state.question_index += 1
-                        st.experimental_rerun()
+                        st.rerun()
             else:
                 # Move to mood questions
                 st.session_state.stage = 'mood'
                 st.session_state.question_index = 0
-                st.experimental_rerun()
+                st.rerun()
     
     # STAGE 2: Mood and Context Collection - One question at a time
     elif st.session_state.stage == 'mood':
@@ -687,7 +687,7 @@ def main():
                             # Go back to persona questions
                             st.session_state.stage = 'persona'
                             st.session_state.question_index = len(st.session_state.persona_questions) - 1
-                        st.experimental_rerun()
+                        st.rerun()
                 
                 with col2:
                     if st.session_state.question_index < len(st.session_state.mood_questions) - 1:
@@ -698,14 +698,14 @@ def main():
                     if st.button(next_text, key=f"next_{st.session_state.question_index}"):
                         if st.session_state.question_index < len(st.session_state.mood_questions) - 1:
                             st.session_state.question_index += 1
-                            st.experimental_rerun()
+                            st.rerun()
                         else:
                             st.session_state.stage = 'searching'
-                            st.experimental_rerun()
+                            st.rerun()
             else:
                 # Move to searching
                 st.session_state.stage = 'searching'
-                st.experimental_rerun()
+                st.rerun()
     
     # STAGE 3: Searching for Recommendations
     elif st.session_state.stage == 'searching':
@@ -918,7 +918,7 @@ def main():
         
         st.session_state.recommendations = processed_recommendations
         st.session_state.stage = 'results'
-        st.experimental_rerun()
+        st.rerun()
     
     # STAGE 4: Display Recommendations
     elif st.session_state.stage == 'results':
@@ -930,7 +930,7 @@ def main():
                 # Reset session state
                 for key in list(st.session_state.keys()):
                     del st.session_state[key]
-                st.experimental_rerun()
+                st.rerun()
         else:
             # Display recommendations in enhanced cards
             cols = st.columns(len(st.session_state.recommendations))
@@ -957,7 +957,7 @@ def main():
                     # Reset session state
                     for key in list(st.session_state.keys()):
                         del st.session_state[key]
-                    st.experimental_rerun()
+                    st.rerun()
                 
     # Footer
     st.markdown("""
@@ -969,7 +969,7 @@ def main():
                      alt="TMDB" width="80">
             </div>
             <div>
-                <img src="https://lh3.googleusercontent.com/vWdgYhn0Nzl75Yq_MbJoUzRcm2Kf9rTRCgHJuhQMZQYPqGmlik2iGrTVP3mBYPn0z9fjGpwv4wnNGGffIJ2K0v2dRrJ_MIh0PlfR-r4" 
+                <img src="https://www.gstatic.com/gumdrop/files/bard-gemini-word-mark-transparent-w312px-h112px-2x.png" 
                      alt="Google Gemini" width="120">
             </div>
         </div>
