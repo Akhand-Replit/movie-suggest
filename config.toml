@@ -35,5 +35,5 @@ japanese_titles_fallback = true
 
 [questions]
 persona_count = 4
-mood_count = 4
+mood_count = 7
 step_by_step = true
