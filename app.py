@@ -2,11 +2,10 @@ import streamlit as st
 import requests
 import json
 import random
-import google.generativeai as genai
+import time
 from PIL import Image
 import io
 import base64
-import time
 
 # App configuration
 st.set_page_config(
@@ -186,22 +185,33 @@ def load_css():
 
 load_css()
 
-# Functions for TMDB API
+# Get TMDB configuration
 def get_tmdb_config():
+    if not tmdb_api_key or tmdb_api_key == "YOUR_TMDB_API_KEY_HERE":
+        st.error("TMDB API key not properly configured")
+        return None
+        
     url = "https://api.themoviedb.org/3/configuration"
     headers = {
         "accept": "application/json",
         "Authorization": f"Bearer {tmdb_api_key}"
     }
     
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        st.error(f"Failed to get TMDB configuration: {response.text}")
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            st.error(f"Failed to get TMDB configuration: {response.status_code}")
+            return None
+    except Exception as e:
+        st.error(f"Error connecting to TMDB API: {str(e)}")
         return None
 
 def search_movies(query, media_type="movie"):
+    if not tmdb_api_key:
+        return None
+        
     url = f"https://api.themoviedb.org/3/search/{media_type}"
     headers = {
         "accept": "application/json",
@@ -214,14 +224,21 @@ def search_movies(query, media_type="movie"):
         "page": 1
     }
     
-    response = requests.get(url, headers=headers, params=params)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        st.error(f"Failed to search movies: {response.text}")
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            st.error(f"Failed to search movies: {response.status_code}")
+            return None
+    except Exception as e:
+        st.error(f"Error searching movies: {str(e)}")
         return None
 
 def get_movie_details(movie_id, media_type="movie"):
+    if not tmdb_api_key:
+        return None
+        
     url = f"https://api.themoviedb.org/3/{media_type}/{movie_id}"
     headers = {
         "accept": "application/json",
@@ -232,11 +249,15 @@ def get_movie_details(movie_id, media_type="movie"):
         "append_to_response": "credits,videos"
     }
     
-    response = requests.get(url, headers=headers, params=params)
-    if response.status_code == 200:
-        return response.json()
-    else:
-        st.error(f"Failed to get movie details: {response.text}")
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            st.error(f"Failed to get movie details: {response.status_code}")
+            return None
+    except Exception as e:
+        st.error(f"Error getting movie details: {str(e)}")
         return None
 
 def get_image_url(poster_path, base_url, poster_size):
@@ -284,6 +305,30 @@ def main():
             
             # Use Gemini to generate persona questions if they don't exist yet
             if 'persona_questions' not in st.session_state:
+                # Fallback questions defined first to ensure they're always available
+                st.session_state.persona_questions = [
+                    {
+                        "id": "content_type",
+                        "text": "Do you prefer watching anime or movies?",
+                        "options": ["Anime", "Movies", "Both equally"]
+                    },
+                    {
+                        "id": "preferred_genres",
+                        "text": "Which genres do you usually enjoy watching?",
+                        "options": ["Action/Adventure", "Drama/Romance", "Comedy", "Sci-Fi/Fantasy"]
+                    },
+                    {
+                        "id": "language_preference",
+                        "text": "Which language content do you prefer?",
+                        "options": ["English", "Japanese", "Korean", "Bollywood/Hindi", "Multiple languages"]
+                    },
+                    {
+                        "id": "viewing_frequency",
+                        "text": "How often do you watch movies or shows?",
+                        "options": ["Daily", "Few times a week", "Weekends only", "Occasionally"]
+                    }
+                ]
+                
                 with st.spinner("Crafting personalized questions..."):
                     if gemini_available:
                         prompt = """
@@ -316,37 +361,13 @@ def main():
                                     questions_json = json.loads(json_str)
                                     st.session_state.persona_questions = questions_json["questions"]
                                 else:
-                                    raise ValueError("No valid JSON found in response")
+                                    st.warning("Using default questions (couldn't parse Gemini response)")
                             else:
-                                raise ValueError("Empty response from Gemini API")
+                                st.warning("Using default questions (no response from Gemini)")
                         except Exception as e:
-                            st.warning(f"Using default questions due to API limitation. Error: {str(e)}")
-                            # Use fallback questions below
+                            st.warning(f"Using default questions due to API limitation: {str(e)}")
                     else:
                         st.warning("Using default questions (Gemini API unavailable)")
-                        # Use fallback questions below
-                        st.session_state.persona_questions = [
-                            {
-                                "id": "content_type",
-                                "text": "Do you prefer watching anime or movies?",
-                                "options": ["Anime", "Movies", "Both equally"]
-                            },
-                            {
-                                "id": "preferred_genres",
-                                "text": "Which genres do you usually enjoy watching?",
-                                "options": ["Action/Adventure", "Drama/Romance", "Comedy", "Sci-Fi/Fantasy"]
-                            },
-                            {
-                                "id": "language_preference",
-                                "text": "Which language content do you prefer?",
-                                "options": ["English", "Japanese", "Korean", "Bollywood/Hindi", "Multiple languages"]
-                            },
-                            {
-                                "id": "viewing_frequency",
-                                "text": "How often do you watch movies or shows?",
-                                "options": ["Daily", "Few times a week", "Weekends only", "Occasionally"]
-                            }
-                        ]
             
             # Display persona questions
             for q in st.session_state.persona_questions:
@@ -367,6 +388,35 @@ def main():
             
             # Generate mood questions based on persona if they don't exist yet
             if 'mood_questions' not in st.session_state:
+                # Fallback mood questions defined first
+                st.session_state.mood_questions = [
+                    {
+                        "id": "social_context",
+                        "text": "Who are you watching with?",
+                        "options": ["Alone", "With friend(s)", "With family", "With partner"]
+                    },
+                    {
+                        "id": "current_mood",
+                        "text": "What's your current mood?",
+                        "options": ["Happy/Excited", "Relaxed/Chill", "Sad/Emotional", "Thoughtful/Introspective"]
+                    },
+                    {
+                        "id": "available_time",
+                        "text": "How much time do you have available?",
+                        "options": ["Under 2 hours", "2-3 hours", "Multiple sessions", "Binge-watch a series"]
+                    },
+                    {
+                        "id": "content_theme",
+                        "text": "What theme are you interested in right now?",
+                        "options": ["Love/Romance", "Action/Excitement", "Mystery/Suspense", "Escapism/Fantasy"]
+                    },
+                    {
+                        "id": "content_recency",
+                        "text": "Do you prefer new releases or classics?",
+                        "options": ["New releases (last 2 years)", "Recent (last 5 years)", "Timeless classics", "Don't care"]
+                    }
+                ]
+                
                 with st.spinner("Analyzing your preferences..."):
                     persona_json = json.dumps(st.session_state.persona)
                     if gemini_available:
@@ -408,42 +458,13 @@ def main():
                                     questions_json = json.loads(json_str)
                                     st.session_state.mood_questions = questions_json["questions"]
                                 else:
-                                    raise ValueError("No valid JSON found in response")
+                                    st.warning("Using default questions (couldn't parse Gemini response)")
                             else:
-                                raise ValueError("Empty response from Gemini API")
+                                st.warning("Using default questions (no response from Gemini)")
                         except Exception as e:
-                            st.warning(f"Using default questions due to API limitation. Error: {str(e)}")
-                            # Use fallback questions below
+                            st.warning(f"Using default questions due to API limitation: {str(e)}")
                     else:
                         st.warning("Using default questions (Gemini API unavailable)")
-                        # Use fallback questions below
-                        st.session_state.mood_questions = [
-                            {
-                                "id": "social_context",
-                                "text": "Who are you watching with?",
-                                "options": ["Alone", "With friend(s)", "With family", "With partner"]
-                            },
-                            {
-                                "id": "current_mood",
-                                "text": "What's your current mood?",
-                                "options": ["Happy/Excited", "Relaxed/Chill", "Sad/Emotional", "Thoughtful/Introspective"]
-                            },
-                            {
-                                "id": "available_time",
-                                "text": "How much time do you have available?",
-                                "options": ["Under 2 hours", "2-3 hours", "Multiple sessions", "Binge-watch a series"]
-                            },
-                            {
-                                "id": "content_theme",
-                                "text": "What theme are you interested in right now?",
-                                "options": ["Love/Romance", "Action/Excitement", "Mystery/Suspense", "Escapism/Fantasy"]
-                            },
-                            {
-                                "id": "content_recency",
-                                "text": "Do you prefer new releases or classics?",
-                                "options": ["New releases (last 2 years)", "Recent (last 5 years)", "Timeless classics", "Don't care"]
-                            }
-                        ]
             
             # Display mood questions
             for q in st.session_state.mood_questions:
@@ -479,6 +500,30 @@ def main():
         # Generate recommendations based on user inputs
         persona_json = json.dumps(st.session_state.persona)
         mood_json = json.dumps(st.session_state.mood_context)
+        
+        # Default recommendations in case of API failure
+        recommendations_data = {
+            "recommendations": [
+                {
+                    "title": "The Matrix",
+                    "year": "1999",
+                    "type": "movie",
+                    "explanation": "A classic sci-fi film with groundbreaking visual effects and a thought-provoking story."
+                },
+                {
+                    "title": "Stranger Things",
+                    "year": "2016",
+                    "type": "show",
+                    "explanation": "A nostalgic sci-fi series with great characters and supernatural mysteries."
+                },
+                {
+                    "title": "Spirited Away",
+                    "year": "2001",
+                    "type": "anime",
+                    "explanation": "A beautifully animated fantasy film with rich storytelling and captivating visuals."
+                }
+            ]
+        }
         
         with st.spinner("AI is crafting your personalized recommendations..."):
             if gemini_available:
@@ -519,112 +564,73 @@ def main():
                             json_str = response_text[json_start:json_end]
                             recommendations_data = json.loads(json_str)
                         else:
-                            raise ValueError("No valid JSON found in response")
+                            st.warning("Using default recommendations (couldn't parse Gemini response)")
                     else:
-                        raise ValueError("Empty response from Gemini API")
+                        st.warning("Using default recommendations (no response from Gemini)")
                 except Exception as e:
                     st.error(f"Error generating recommendations with Gemini: {str(e)}")
-                    # Fallback recommendations
-                    recommendations_data = {
-                        "recommendations": [
-                            {
-                                "title": "The Matrix",
-                                "year": "1999",
-                                "type": "movie",
-                                "explanation": "A classic sci-fi film with groundbreaking visual effects and a thought-provoking story."
-                            },
-                            {
-                                "title": "Stranger Things",
-                                "year": "2016",
-                                "type": "show",
-                                "explanation": "A nostalgic sci-fi series with great characters and supernatural mysteries."
-                            },
-                            {
-                                "title": "Spirited Away",
-                                "year": "2001",
-                                "type": "anime",
-                                "explanation": "A beautifully animated fantasy film with rich storytelling and captivating visuals."
-                            }
-                        ]
-                    }
             else:
                 # If Gemini API is not available, use fallback recommendations
                 st.warning("Using default recommendations (Gemini API unavailable)")
-                recommendations_data = {
-                    "recommendations": [
-                        {
-                            "title": "The Matrix",
-                            "year": "1999",
-                            "type": "movie",
-                            "explanation": "A classic sci-fi film with groundbreaking visual effects and a thought-provoking story."
-                        },
-                        {
-                            "title": "Stranger Things",
-                            "year": "2016",
-                            "type": "show",
-                            "explanation": "A nostalgic sci-fi series with great characters and supernatural mysteries."
-                        },
-                        {
-                            "title": "Spirited Away",
-                            "year": "2001",
-                            "type": "anime",
-                            "explanation": "A beautifully animated fantasy film with rich storytelling and captivating visuals."
-                        }
-                    ]
+        
+        # Process each recommendation and get details from TMDB
+        processed_recommendations = []
+        
+        for rec in recommendations_data["recommendations"]:
+            # Determine media type for API
+            media_type = "movie"
+            if rec["type"].lower() in ["show", "tv show", "tv", "series"]:
+                media_type = "tv"
+            elif rec["type"].lower() == "anime":
+                media_type = "tv"  # Most anime are categorized as TV shows in TMDB
+            
+            # Search for the title
+            search_results = search_movies(rec["title"], media_type)
+            
+            if search_results and search_results["results"]:
+                # Get the first result
+                result = search_results["results"][0]
+                movie_id = result["id"]
+                
+                # Get detailed information
+                details = get_movie_details(movie_id, media_type)
+                
+                if details:
+                    # Get image URL
+                    base_url = st.session_state.tmdb_config["images"]["secure_base_url"]
+                    poster_size = st.session_state.tmdb_config["images"]["poster_sizes"][3]  # Medium size
+                    image_url = get_image_url(details.get("poster_path"), base_url, poster_size)
+                    
+                    # Create recommendation object
+                    recommendation = {
+                        "id": movie_id,
+                        "title": details.get("title", details.get("name", rec["title"])),
+                        "year": details.get("release_date", details.get("first_air_date", "")),
+                        "overview": details.get("overview", ""),
+                        "image_url": image_url,
+                        "explanation": rec["explanation"],
+                        "media_type": media_type,
+                        "genres": [genre["name"] for genre in details.get("genres", [])]
+                    }
+                    
+                    processed_recommendations.append(recommendation)
+            else:
+                # If TMDB search fails, create a basic recommendation
+                recommendation = {
+                    "id": 0,
+                    "title": rec["title"],
+                    "year": rec.get("year", ""),
+                    "overview": "Details not available.",
+                    "image_url": "https://via.placeholder.com/300x450?text=No+Image+Available",
+                    "explanation": rec["explanation"],
+                    "media_type": media_type,
+                    "genres": []
                 }
-                
-                # Process each recommendation and get details from TMDB
-                processed_recommendations = []
-                
-                for rec in recommendations_data["recommendations"]:
-                    # Determine media type for API
-                    media_type = "movie"
-                    if rec["type"].lower() in ["show", "tv show", "tv", "series"]:
-                        media_type = "tv"
-                    elif rec["type"].lower() == "anime":
-                        media_type = "tv"  # Most anime are categorized as TV shows in TMDB
-                    
-                    # Search for the title
-                    search_results = search_movies(rec["title"], media_type)
-                    
-                    if search_results and search_results["results"]:
-                        # Get the first result
-                        result = search_results["results"][0]
-                        movie_id = result["id"]
-                        
-                        # Get detailed information
-                        details = get_movie_details(movie_id, media_type)
-                        
-                        if details:
-                            # Get image URL
-                            base_url = st.session_state.tmdb_config["images"]["secure_base_url"]
-                            poster_size = st.session_state.tmdb_config["images"]["poster_sizes"][3]  # Medium size
-                            image_url = get_image_url(details.get("poster_path"), base_url, poster_size)
-                            
-                            # Create recommendation object
-                            recommendation = {
-                                "id": movie_id,
-                                "title": details.get("title", details.get("name", rec["title"])),
-                                "year": details.get("release_date", details.get("first_air_date", "")),
-                                "overview": details.get("overview", ""),
-                                "image_url": image_url,
-                                "explanation": rec["explanation"],
-                                "media_type": media_type,
-                                "genres": [genre["name"] for genre in details.get("genres", [])]
-                            }
-                            
-                            processed_recommendations.append(recommendation)
-                
-                st.session_state.recommendations = processed_recommendations
-                st.session_state.stage = 'results'
-                st.rerun()
-                
-            except Exception as e:
-                st.error(f"Error generating recommendations: {str(e)}")
-                # Fallback in case of API error
-                st.session_state.stage = 'results'
-                st.session_state.recommendations = []  # Empty recommendations
-                st.rerun()
+                processed_recommendations.append(recommendation)
+        
+        st.session_state.recommendations = processed_recommendations
+        st.session_state.stage = 'results'
+        st.rerun()
     
     # STAGE 4: Display Recommendations
     elif st.session_state.stage == 'results':
@@ -648,8 +654,8 @@ def main():
                         <h3>{rec['title']}</h3>
                         <p><strong>Year:</strong> {rec['year'][:4] if rec['year'] else 'N/A'}</p>
                         <img src="{rec['image_url']}" alt="{rec['title']}" style="width:100%; border-radius:5px; margin:10px 0;">
-                        <p><strong>Genres:</strong> {', '.join(rec['genres'])}</p>
-                        <p><strong>Overview:</strong> {rec['overview'][:150]}...</p>
+                        <p><strong>Genres:</strong> {', '.join(rec['genres']) if rec['genres'] else 'N/A'}</p>
+                        <p><strong>Overview:</strong> {rec['overview'][:150] + '...' if len(rec['overview']) > 150 else rec['overview'] or 'Not available'}</p>
                         <div style="margin-top:15px; padding:10px; background:#15153a; border-radius:5px;">
                             <p><strong>Why we recommend this:</strong> {rec['explanation']}</p>
                         </div>
